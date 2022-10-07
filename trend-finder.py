@@ -3,13 +3,22 @@ from datetime import datetime
 import requests
 import time
 from multiprocessing import Process
+import schedule
 
 
 EXCHANGE_INFO = "https://api.binance.com/api/v3/exchangeInfo"
 TICKER_INFO = "https://api.binance.com/api/v3/ticker/24hr"
 
+CANDIDATES = []
 
 def main():
+    schedule.every().minute.do(job)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+def init_ops():
     exchange_info = get_exchange_info()
     pairs = get_pairs(exchange_info)
     busd_pairs = filter_busd_pairs(pairs)
@@ -19,8 +28,8 @@ def main():
         for bp in busd_pairs:
             if ticker["symbol"] == bp:
                 if float(ticker["priceChangePercent"]) > 2.0:
-                    print(ticker["symbol"], ticker["priceChangePercent"]) 
-
+                    if bp not in CANDIDATES:
+                        CANDIDATES.append(bp) 
 
 
 def filter_busd_pairs(pairs):
